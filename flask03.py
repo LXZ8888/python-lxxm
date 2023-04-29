@@ -1,9 +1,33 @@
-'''用户相关的接口  '''
 from flask import Flask, render_template, jsonify
+from flask import request
+# import requests
 from flask import request
 
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
+
+'''
+request.args请求参数,get类型，获取某一个参数的值，用get方法取具体的值
+request.get_json() :post类型，入参为json字符串，
+request.form：post类型，入参为表单类型，用get方法取具体的值
+request.get_data():post类型，入参为text文件类型，默认的值是字节类型，
+request.path请求路径
+request.method请求方法
+request.headers.get() 请求头信息,拿到token，token到底正不正确，然后再去数据库比较
+    print(request.headers.get('token'))
+    print(request.headers.get('cookie'))
+    print(request.headers.get('Authorization'))
+    print(request.headers.get('User-Agent'))
+'''
+
+
+'''
+导入要放到最前面，不然报错
+flask模块中的request:请求上下文，客户端发送了请求给服务端，就发送了一个request对象
+通过一系列的方法读取这个request对象中的内容（请求方法request.method，请求路径request.path,请求参数request.args,请求头信息）
+'''
+'''用户相关的接口  '''
+
 
 # 数据写死
 datas = [
@@ -25,47 +49,79 @@ import json
 
 @app.route('/users', methods=['GET'])
 def users():
-    '''获取所有的用户
-   limit:表示限制数量， 1 返回一条数据   非必填
-    tab：表示类型， tab：boy 返回用户里面所有性别为男的用户信息   非必填
-    参数异常的情况，添加各种返回提示信息
-    '''
-    canshu = request.args
+    '''获取所有的用户'''
+    d = {
+        "code": 200,
+        "data": [
+            {
+                "name1": "test1",
+                "rank": "putong"
+            },
+            {
+                "name2": "test2",
+                "rank": "vip"
 
-    # 我想在tab为girl的情况下，再返回限制条数
-    # 我想在前10条数据，返回这10条数据里面tab为girl
-    # 如果用户传了limit参数，而且传了tab
-    # 多个参数都传了，需要放到第一个进行判断
-    if 'tab' in canshu and 'limit' in canshu:
-        limit = canshu.get('limit')
-        tab = canshu.get('tab')
-        d = [data for data in datas if data['gender'] == tab]
-        d = d[:int(limit)]
-        return jsonify({'code': 200, 'users': d})
-
-    if 'limit' in canshu:  # 如果用户传了limit参数
-        limit = canshu.get('limit')
-        d = datas[:int(limit)]  # 切片L【：1】   #如果读取数据库语句，select * from 表 limit2
-        return jsonify({'code': 200, 'users': d})
-
-    if 'tab' in canshu:  # 如果用户传了tab参数
-        tab = canshu.get('limit')
-        # d = []
-        # # d = jsonify({'name': 'test5', 'from': '深圳'})  #返回的必须是一个json字符串，json对象 {}
-        # for data in datas:
-        #     if data['gender'] == tab:
-        #         d.append(data)
-        # 1循环一个列表，2再加一个if判断，获取列表满足条件的值，3再添加到一个新的列表
-        d = [data for data in datas if data['gender'] == tab]
-        return jsonify({'code': 200, 'users': d})
+            },
+            {
+                "name3": "test3",
+                "rank": "vvip"
+            }
+        ],
+    }
+    # d=json.dumps(d)
+    canshu = request.args    #request.args参数
+    # print(canshu)
+    # print(request.path)
+    # print(request.method)
+    limit = canshu.get('limit')
+    tab = canshu.get('tab')
+    d = jsonify(d)
+    # print(request.headers.get('token'))
+    # print(request.headers.get('cookie'))
+    print(request.headers.get('User-Agent'))
 
 
-
-    else:  # 没有传任何参数，默认返回所有的用户
-        d = jsonify({'code': 200, 'users': datas})
     return d
 
 
+@app.route('/users/<int:id>', methods=['get'])
+def user(id):
+    '''
+    获取单个用户
+    id:通过用户请求传过去的id，传入视图函数
+    '''
+    print(id)
+    res = {"code": 200, id: id}
+    return jsonify(res)
+
+@app.route('/addUser',methods=['POST'])
+def addUser():
+    '''新增用户'''
+    canshu=request.get_json()  #返回响应值
+    #print(type(canshu),canshu)
+    res={"code":200,"msg":"{}用户新增成功".format(canshu['username'])}
+    return jsonify(res)
+
+
+
+@app.route('/editUser',methods=['POST'])
+def editUser():
+    '''编辑用户'''
+    canshu=request.form
+    id=canshu.get('id')
+    phone=canshu.get('phone')
+    print(id,phone)
+    res={"code":200,"msg":"用户编辑成功"}
+    return jsonify(res)
+
+@app.route('/deleteUser',methods=['POST'])
+def deletUser():
+    '''删除用户'''
+    canshu=request.get_data()
+    print(type(canshu),canshu)
+    print(type(str(canshu)))
+    res={"code":200,"msg":"用户删除成功"}
+    return jsonify(res)
 
 if __name__ == '__main__':
     # 运行本项目,host=0.0.0.0可以让其他电脑访问到该网站。
